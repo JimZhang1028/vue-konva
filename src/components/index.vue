@@ -41,8 +41,10 @@
           <span @click='closeTips'>×</span>
         </div>
         <div class='content'>
-          <el-tooltip class='item' effect='dark' content='123' placement='right'>
-            <div class='msg'>{{ msg }}</div>
+          <el-tooltip class="item" effect="dark" content="Right Center 提示文字" placement="right">
+            <div class='msg'>
+              {{ msg }}
+            </div>
           </el-tooltip>
         </div>
       </div>
@@ -53,6 +55,7 @@
 <script>
 import Mapimg from '../assets/map.jpg';
 import Marker from '../assets/marker.jpg';
+import request from '@/http/request'
 
 export default {
   data () {
@@ -71,55 +74,8 @@ export default {
         x: 0,
         y: 0
       },
-      markerList: [
-        {
-          class: 'marker',
-          width: 30,
-          height: 30,
-          x: 100,
-          y: 300
-        },
-        {
-          class: 'marker',
-          width: 30,
-          height: 30,
-          x: 163,
-          y: 233
-        },
-        {
-          class: 'marker',
-          width: 30,
-          height: 30,
-          x: 350,
-          y: 168
-        }
-      ],
-      imgMarkerConfig: [
-        {
-          class: 'marker',
-          name: 'Marker-1',
-          width: 30,
-          height: 30,
-          x: 100,
-          y: 300
-        },
-        {
-          class: 'marker',
-          name: 'Marker-2',
-          width: 30,
-          height: 30,
-          x: 163,
-          y: 233
-        },
-        {
-          class: 'marker',
-          name: 'Marker-3',
-          width: 30,
-          height: 30,
-          x: 350,
-          y: 168
-        }
-      ],
+      markerList: [],
+      imgMarkerConfig: [],
       fencePoints: [],
       fenceX: 0,
       fenceY: 0,
@@ -174,8 +130,17 @@ export default {
         this.imageConfig.x = x < 0 ? 0 : x
         this.imageConfig.y = y < 0 ? 0 : y
 
-        // 调用computed中定义的initMarkerCoordinate对marker位置进行初始化
-        this.initMarkerCoordinate
+        
+        // 请求marker标记点分布
+        this.$axios.get('/api/marker').then(res => {
+          console.log(res);
+        })
+        request.http_mock('/api/marker').then(response => {
+          this.imgMarkerConfig = response.data.list;
+          this.markerList = response.data.defaultList;
+          // 调用computed中定义的initMarkerCoordinate对marker位置进行初始化
+          this.initMarkerCoordinate
+        })
       }
     },
     // 载入标记点
@@ -223,27 +188,16 @@ export default {
     },
     // 控制围栏位置
     fenceCoordinate: function() {
-      const defaultPoints = [
-        {
-          x:0,
-          y:0
-        },
-        {
-          x:300,
-          y:0
-        },
-        {
-          x:100,
-          y:100
+      request.http_mock('/api/fence').then(response => {
+        const defaultPoints = response.data;
+        this.fenceX = (300 * this.imageConfig.scaleX) + this.imageConfig.x;
+        this.fenceY = (230 * this.imageConfig.scaleY) + this.imageConfig.y;
+        this.fencePoints = [];
+        for (let i = 0; i < defaultPoints.length; i++) {
+          this.fencePoints.push(defaultPoints[i].x * this.imageConfig.scaleX);
+          this.fencePoints.push(defaultPoints[i].y * this.imageConfig.scaleY);
         }
-      ];
-      this.fenceX = (300 * this.imageConfig.scaleX) + this.imageConfig.x;
-      this.fenceY = (230 * this.imageConfig.scaleY) + this.imageConfig.y;
-      this.fencePoints = [];
-      for (let i = 0; i < defaultPoints.length; i++) {
-        this.fencePoints.push(defaultPoints[i].x * this.imageConfig.scaleX);
-        this.fencePoints.push(defaultPoints[i].y * this.imageConfig.scaleY);
-      }
+      })
     },
     // 鼠标经过marker标记
     mouseoverMarker: function(e) {
@@ -272,7 +226,12 @@ export default {
     closeTips: function(e){
       this.isTips = true
       document.getElementsByClassName('tipsWindow')[0].style.display = 'none'
-    }
+    },
+    // getData: function() {
+    //   request.http_mock('/api/marker').then(response => {
+    //     console.log(response)
+    //   })
+    // }
   }
 }
 </script>
@@ -309,6 +268,9 @@ export default {
     height: calc(~'(100% - 20px)');
     overflow-y: auto;
     text-align: center;
+    .ivu-tooltip {
+      display: block;
+    }
   }
   .close {
     width: 100%;
